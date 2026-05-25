@@ -457,6 +457,11 @@ class PLRGroup:
         """
         return frozenset(a.pitch_classes) & frozenset(b.pitch_classes)
 
+    @property
+    def modulus(self) -> int:
+        """Number of pitch classes."""
+        return self._modulus
+
     def order(self) -> int:
         """Order of the PLR group (24 for modulus 12)."""
         return 2 * self._modulus

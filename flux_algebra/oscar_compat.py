@@ -172,7 +172,11 @@ def order(G) -> int:
     -------
     int
     """
-    return G.order()
+    if isinstance(G, TranspositionInversionGroup):
+        return G.order
+    elif isinstance(G, PLRGroup):
+        return G.order()
+    return G.order
 
 
 def elements(G) -> list:
