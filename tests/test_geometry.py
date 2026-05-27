@@ -112,6 +112,21 @@ class TestDialPolytope:
         dp = DialPolytope([TraditionRegion("a", center=(1, 1, 1))])
         assert dp.voronoi() is None
 
+    def test_empty_traditions(self):
+        dp = DialPolytope()
+        assert len(dp.traditions) == 0
+        assert dp.volume() == 0.0
+        assert dp.surface_area() == 0.0
+        assert dp.nearest_tradition((0, 0, 0)) is None
+
+    def test_repr_dial(self):
+        dp = DialPolytope([TraditionRegion("a", center=(1, 1, 1))])
+        assert "DialPolytope" in repr(dp)
+
+    def test_repr_geodesic(self):
+        vlg = VoiceLeadingGeodesic()
+        assert "VoiceLeadingGeodesic" in repr(vlg)
+
 
 class TestVoiceLeadingGeodesic:
     def test_geodesic_C_to_F(self):
@@ -137,6 +152,12 @@ class TestVoiceLeadingGeodesic:
         paths = vlg.all_geodesics([0, 4, 7], [0, 4, 7])
         assert len(paths) >= 1
         assert all(p.distance == 0 for p in paths)
+
+    def test_all_geodesics_different_chords(self):
+        vlg = VoiceLeadingGeodesic()
+        paths = vlg.all_geodesics([0, 4, 7], [5, 9, 0])
+        assert len(paths) >= 1
+        assert all(p.distance == paths[0].distance for p in paths)
 
     def test_geodesic_path_repr(self):
         vlg = VoiceLeadingGeodesic()

@@ -15,6 +15,15 @@ class TestTuningField:
         tf = TuningField.ET(12)
         assert abs(tf.step_cents() - 100.0) < 0.01
 
+    def test_et_degree_none(self):
+        tf = TuningField(name="custom")
+        assert tf.degree is None
+
+    def test_et_minimal_polynomial(self):
+        tf = TuningField.ET(12)
+        assert tf.minimal_polynomial is not None
+        assert len(tf.minimal_polynomial) == 13  # degree 12 + 1
+
     def test_et24(self):
         tf = TuningField.ET(24)
         assert tf.degree == 24
@@ -25,9 +34,19 @@ class TestTuningField:
         assert "meantone" in tf.name
         assert tf.degree == 4
 
+    def test_third_comma_meantone(self):
+        tf = TuningField.meantone(quarter=False)
+        assert "third-comma" in tf.name
+        assert tf.degree == 3
+
     def test_just(self):
         tf = TuningField.just()
         assert "just" in tf.name
+
+    def test_just_custom_primes(self):
+        tf = TuningField.just(primes=(2, 3, 5, 7))
+        assert tf.primes == (2, 3, 5, 7)
+        assert "7" in tf.name
 
     def test_pythagorean(self):
         tf = TuningField.pythagorean()
@@ -87,3 +106,14 @@ class TestAlgebraicTone:
     def test_repr(self):
         tone = AlgebraicTone.from_fraction(3, 2, name="P5")
         assert "P5" in repr(tone)
+
+    def test_degree_none(self):
+        tone = AlgebraicTone(ratio=1.5)
+        assert tone.degree is None
+
+    def test_compose_no_name(self):
+        a = AlgebraicTone(ratio=1.5)
+        b = AlgebraicTone(ratio=1.25)
+        c = a.compose(b)
+        assert abs(c.ratio - 1.875) < 0.01
+        assert "?" in c.name

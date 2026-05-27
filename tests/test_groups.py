@@ -104,6 +104,28 @@ class TestTranspositionInversionGroup:
         ti = TranspositionInversionGroup()
         assert ti.inverse(("T", 3)) == ("T", 9)
 
+    def test_non12_modulus(self):
+        ti = TranspositionInversionGroup(modulus=6)
+        assert ti.order == 12
+        assert ti.T(3, 4) == 1  # (4+3) % 6
+        assert ti.I(0, 2) == 4  # (0-2) % 6
+
+    def test_compose_TI(self):
+        ti = TranspositionInversionGroup()
+        # T_3 ∘ I_5 = I_8
+        result = ti.compose(("T", 3), ("I", 5))
+        assert result == ("I", 8)
+
+    def test_compose_IT(self):
+        ti = TranspositionInversionGroup()
+        # I_5 ∘ T_3 = I_2
+        result = ti.compose(("I", 5), ("T", 3))
+        assert result == ("I", 2)
+
+    def test_repr(self):
+        ti = TranspositionInversionGroup()
+        assert "TranspositionInversionGroup" in repr(ti)
+
     def test_inverse_I_self_inverse(self):
         ti = TranspositionInversionGroup()
         inv = ti.inverse(("I", 5))
@@ -218,6 +240,29 @@ class TestPLRGroup:
         assert 0 in ct
         assert 4 in ct  # C and E (A minor has {9,0,4})
 
+    def test_common_tones_disjoint(self):
+        """Two triads with no common tones."""
+        plr = PLRGroup()
+        ct = plr.common_tones(Triad(0, "major"), Triad(6, "major"))  # C vs F#
+        assert len(ct) == 0
+
+    def test_walk(self):
+        plr = PLRGroup()
+        c_maj = Triad(0, "major")
+        walk = plr.walk("P", 3, c_maj)
+        assert len(walk) == 4  # start + 3 steps
+        assert walk[0] == c_maj
+        # P applied once flips, twice returns
+        assert walk[1] == Triad(0, "minor")
+        assert walk[2] == Triad(0, "major")
+        assert walk[3] == Triad(0, "minor")
+
+    def test_modulus_property(self):
+        assert PLRGroup().modulus == 12
+
+    def test_repr(self):
+        assert "PLRGroup" in repr(PLRGroup())
+
     def test_order(self):
         assert PLRGroup().order() == 24
 
@@ -263,6 +308,22 @@ class TestPermutationVoiceLeading:
         inv = pvl.inverse()
         assert inv.source == (5, 9, 0)
         assert inv.target == (0, 4, 7)
+
+    def test_properties(self):
+        pvl = PermutationVoiceLeading(
+            source=(0, 4, 7), target=(5, 9, 0), permutation=(2, 0, 1)
+        )
+        assert pvl.source == (0, 4, 7)
+        assert pvl.target == (5, 9, 0)
+        assert pvl.permutation == (2, 0, 1)
+
+    def test_repr(self):
+        pvl = PermutationVoiceLeading(
+            source=(0, 4, 7), target=(5, 9, 0), permutation=(2, 0, 1)
+        )
+        r = repr(pvl)
+        assert "PermutationVoiceLeading" in r
+        assert "perm=" in r
 
     def test_invalid_permutation(self):
         with pytest.raises(ValueError):

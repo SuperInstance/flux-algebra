@@ -167,3 +167,36 @@ class TestTropicalVoiceLeading:
         assert "TropicalVoiceLeading" in repr(tvl)
         result = tvl.compute([0, 4, 7], [5, 9, 0])
         assert "→" in repr(result)
+
+    def test_tropical_polynomial_repr(self):
+        tp = TropicalPolynomial([0.0, 4.0, 7.0])
+        r = repr(tp)
+        assert "TropicalPolynomial" in r
+
+    def test_tropical_harmony_repr(self):
+        th = TropicalHarmony()
+        assert "TropicalHarmony" in repr(th)
+
+    def test_non12_modulus(self):
+        th = TropicalHarmony(modulus=6)
+        cost = th.chord_cost([0])
+        assert cost(0) == 0.0
+        assert cost(3) == 3.0  # 3 away from 0 in mod 6
+
+    def test_voice_leading_empty(self):
+        th = TropicalHarmony()
+        assert th.tropical_voice_leading([], []) == []
+
+    def test_voice_leading_mismatch(self):
+        th = TropicalHarmony()
+        with pytest.raises(ValueError):
+            th.tropical_voice_leading([0], [0, 4])
+
+    def test_tropical_polynomial_all_inf(self):
+        tp = TropicalPolynomial([TROPICAL_INF, TROPICAL_INF])
+        assert tp.evaluate(0.0) == TROPICAL_INF
+
+    def test_tropical_vl_non12(self):
+        tvl = TropicalVoiceLeading(modulus=6)
+        result = tvl.compute([0, 2, 4], [1, 3, 5])
+        assert result.distance >= 0

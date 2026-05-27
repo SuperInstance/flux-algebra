@@ -148,3 +148,17 @@ class TestTriadConstructors:
             assert maj.is_major
             m = minor_triad(root)
             assert m.is_minor
+
+    def test_voronoi_cells(self):
+        from flux_algebra.oscar_compat import voronoi_cells
+        points = [(0, 0, 0), (1, 1, 1), (2, 0, 0), (0, 2, 0)]
+        vor = voronoi_cells(points)
+        assert vor is not None
+
+    def test_number_field_unknown(self):
+        K = number_field("custom-tuning", generator=1.5)
+        assert K.name == "custom-tuning"
+
+    def test_number_field_just_custom_primes(self):
+        K = number_field("just", primes=(2, 3, 5, 7))
+        assert "7" in K.name

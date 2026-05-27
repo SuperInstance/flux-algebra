@@ -95,6 +95,16 @@ class TestVoiceModule:
         mats = vm.voice_leadings_between([0, 4, 7], [5, 9, 0])
         assert len(mats) == 6  # 3! permutations
 
+    def test_non12_modulus(self):
+        vm = VoiceModule(rank=3, modulus=6)
+        result = vm.add([4, 5, 3], [3, 2, 4])
+        np.testing.assert_array_equal(result, [1, 1, 1])  # (7,7,7) mod 6
+
+    def test_subtract_wraps(self):
+        vm = VoiceModule(rank=2, modulus=12)
+        result = vm.subtract([0, 0], [1, 1])
+        np.testing.assert_array_equal(result, [11, 11])
+
     def test_repr(self):
         vm = VoiceModule(rank=4, modulus=12)
         assert "VoiceModule" in repr(vm)

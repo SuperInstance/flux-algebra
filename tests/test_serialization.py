@@ -120,6 +120,14 @@ class TestSerializeDeserialize:
         with pytest.raises(ValueError):
             deserialize({"type": "UnknownType"})
 
+    def test_permutation_voice_leading_unsupported(self):
+        # PermutationVoiceLeading is in the type registry but has no serializer
+        pvl = PermutationVoiceLeading(
+            source=(0, 4, 7), target=(5, 9, 0), permutation=(2, 0, 1)
+        )
+        with pytest.raises(TypeError):
+            serialize(pvl)
+
 
 class TestSaveLoad:
     def test_save_load_triad(self, tmp_path):
@@ -149,3 +157,7 @@ class TestSaveLoad:
         assert isinstance(restored["ring"], HarmonicRing)
         assert isinstance(restored["triad"], Triad)
         assert isinstance(restored["field"], TuningField)
+
+    def test_load_nonexistent(self, tmp_path):
+        with pytest.raises(FileNotFoundError):
+            load(tmp_path / "nonexistent.json")
