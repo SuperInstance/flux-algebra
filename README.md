@@ -13,6 +13,7 @@ Where Oscar combines GAP (groups), Polymake (geometry), Antic (number theory), a
 | Combinatorics      | `combinatorics.py`        | Minimal voice leading           |
 | TropicalGeometry   | `tropical.py`             | Tropical harmony, min-plus voice leading |
 | Modules            | `modules.py`              | Voice modules over harmonic rings |
+| Spectral Analysis  | `spectral.py`             | Laplacian eigenbasis, conservation, fingerprint |
 | Serialization      | `serialization.py`        | Save/load algebraic structures  |
 
 ## Install
@@ -134,7 +135,85 @@ Every module mirrors a component of Oscar.jl, adapted for music-theoretic object
 - **`tropical.py`** — Min-plus semiring applied to harmony and voice leading
 - **`modules.py`** — Free modules of voices over harmonic rings
 - **`serialization.py`** — JSON save/load for all algebraic structures
+- **`spectral.py`** — Tension-Graph Laplacian, eigenbasis decomposition, conservation analysis, tonality fingerprinting
 - **`oscar_compat.py`** — Oscar.jl-style API surface for Julia interop
+
+## Spectral Analysis (`spectral.py`)
+
+This module implements the **Eigenbasis Hypothesis**: musical structures
+are most naturally expressed in the eigenbasis of the Tension-Graph
+Laplacian of the PLR group.
+
+### HarmonicLaplacian
+
+Builds the Tension-Graph Laplacian from PLR group operations:
+
+```python
+from flux_algebra.spectral import HarmonicLaplacian
+
+hl = HarmonicLaplacian(sigma=1.0)
+L = hl.laplacian()                           # 24×24 Laplacian
+print(hl.eigenvalues)                        # sorted ascending
+print(hl.spectral_gap())                    # λ₁ - λ₀
+print(hl.algebraic_connectivity())           # λ₁ (Fiedler value)
+```
+
+### EigenbasisHarmonicRing
+
+Projects chord progressions onto the eigenbasis and measures
+conservation:
+
+```python
+from flux_algebra.spectral import (
+    EigenbasisHarmonicRing,
+    build_common_practice_walk,
+    build_chromatic_walk,
+)
+
+ehr = EigenbasisHarmonicRing()
+
+# Conservation score (lower = more conserved)
+cp = build_common_practice_walk()
+chrom = build_chromatic_walk()
+print(ehr.conservation_score(cp))     # eigenvalue-weighted
+print(ehr.conservation_score(cp, k=5))  # low-freq only
+
+# Optimal voice leading with eigenbasis cost
+perm, cost = ehr.optimal_voice_leading(
+    Triad(0, "major"), Triad(7, "major")
+)
+
+# Modulation detection
+results = ehr.detect_modulation(chord_sequence, window=8)
+```
+
+### TonalityFingerprint
+
+Corpus classification via eigenvalue signatures:
+
+```python
+from flux_algebra.spectral import TonalityFingerprint
+
+sig = TonalityFingerprint().fingerprint(corpus)
+sim = TonalityFingerprint.compare_corpora(corpus_a, corpus_b)
+
+references = {"baroque": cp, "romantic": chrom}
+period, confidence = TonalityFingerprint.identify_period(
+    target, references
+)
+```
+
+### Theory
+
+The Tension-Graph Laplacian is:
+
+```
+W[i, j] = P(i→j) · exp(-tension(i,j) / σ)
+L = D - W
+```
+
+Common-practice progressions have low conservation scores because
+they align with the low-frequency eigenmodes of this graph.
 
 ## License
 

@@ -12,6 +12,17 @@ from flux_algebra.combinatorics import minimal_voice_leading, all_voice_leadings
 from flux_algebra.tropical import TropicalHarmony, TropicalVoiceLeading
 from flux_algebra.modules import VoiceModule
 from flux_algebra.serialization import save, load
+from flux_algebra.spectral import (
+    HarmonicLaplacian,
+    EigenbasisHarmonicRing,
+    TonalityFingerprint,
+    tenney_height,
+    interval_tension,
+    chord_tension,
+    build_common_practice_walk,
+    build_chromatic_walk,
+    build_neapolitan_walk,
+)
 
 __version__ = "0.1.0"
 
@@ -34,6 +45,15 @@ __all__ = [
     "efficiency",
     "TropicalHarmony",
     "TropicalVoiceLeading",
+    "HarmonicLaplacian",
+    "EigenbasisHarmonicRing",
+    "TonalityFingerprint",
+    "tenney_height",
+    "interval_tension",
+    "chord_tension",
+    "build_common_practice_walk",
+    "build_chromatic_walk",
+    "build_neapolitan_walk",
     "VoiceModule",
     "save",
     "load",
