@@ -1,222 +1,89 @@
-# Flux Algebra
+# flux-algebra
 
-Algebraic structures for music theory, inspired by [Oscar.jl](https://github.com/oscar-system/Oscar.jl).
+Algebraic structures for music theory — rings, fields, groups, tropical semiring, spectral analysis, and voice leading, inspired by Oscar.jl.
 
-Where Oscar combines GAP (groups), Polymake (geometry), Antic (number theory), and Singular (commutative algebra) for abstract algebra, **Flux** adapts these pillars to music:
+## What This Gives You
 
-| Oscar.jl          | Flux Algebra              | Domain                          |
-|--------------------|---------------------------|----------------------------------|
-| GAP — Groups       | `groups.py`               | T/I group, PLR group, permutations |
-| Antic — Number Theory | `fields.py`           | Tuning fields, algebraic tones  |
-| Singular — Rings   | `rings.py`                | Harmonic rings, chord ideals    |
-| Polymake — Geometry | `geometry.py`             | Dial polytopes, voice-leading geodesics |
-| Combinatorics      | `combinatorics.py`        | Minimal voice leading           |
-| TropicalGeometry   | `tropical.py`             | Tropical harmony, min-plus voice leading |
-| Modules            | `modules.py`              | Voice modules over harmonic rings |
-| Spectral Analysis  | `spectral.py`             | Laplacian eigenbasis, conservation, fingerprint |
-| Serialization      | `serialization.py`        | Save/load algebraic structures  |
+- **Harmonic rings** — Z/nZ ring arithmetic for pitch-class theory
+- **PLR group** — Neo-Riemannian Parallel/Leading-tone/Relative transformations
+- **Tropical semiring** — min-plus algebra for voice-leading optimization
+- **Tuning fields** — algebraic extensions for equal temperament, just intonation, and microtonal systems
+- **Voice leading** — minimal-distance chord transitions with smoothness and efficiency metrics
+- **Spectral analysis** — harmonic Laplacian, eigenbasis rings, tonality fingerprints
+- **OSCAR-compatible** — designed for integration with algebraic computation systems
 
-## Install
+## Quick Start
+
+```python
+from flux_algebra import (
+    HarmonicRing, PLRGroup, Triad, TuningField,
+    TropicalHarmony, minimal_voice_leading,
+    HarmonicLaplacian, chord_tension
+)
+
+# Pitch-class arithmetic in Z/12Z
+ring = HarmonicRing(12)
+print(ring.add(7, 5))  # 0 (perfect fifth + perfect fourth = octave)
+
+# Neo-Riemannian transformations
+plr = PLRGroup()
+c_major = Triad(0, 4, 7)
+c_minor = plr.parallel(c_major)    # C major → C minor
+a_minor = plr.relative(c_major)    # C major → A minor
+e_minor = plr.leading_tone(c_major) # C major → E minor
+
+# Minimal voice leading
+dist, mapping = minimal_voice_leading([0, 4, 7], [0, 3, 7])
+print(f"Cmaj → Cmin: distance={dist}, mapping={mapping}")
+
+# Tropical harmony
+trop = TropicalHarmony()
+progression = trop.voice_lead([(0,4,7), (5,9,0), (7,11,2)])  # I → IV → V
+
+# Spectral analysis
+lap = HarmonicLaplacian.from_chords(["C", "Dm", "Em", "F", "G", "Am"])
+tension = chord_tension("Bdim", lap)
+print(f"Bdim tension: {tension:.3f}")
+```
+
+## API Reference
+
+| Module | Key Types | Description |
+|---|---|---|
+| `rings` | `HarmonicRing`, `IntervalRing`, `ChordIdeal` | Z/nZ ring structures |
+| `fields` | `TuningField`, `AlgebraicTone` | Algebraic tuning systems |
+| `groups` | `TranspositionInversionGroup`, `PLRGroup`, `Triad` | Transformation groups |
+| `geometry` | `DialPolytope`, `VoiceLeadingGeodesic`, `TraditionRegion` | Geometric voice leading |
+| `combinatorics` | `minimal_voice_leading`, `all_voice_leadings` | VL search algorithms |
+| `tropical` | `TropicalHarmony`, `TropicalVoiceLeading` | Min-plus music theory |
+| `spectral` | `HarmonicLaplacian`, `TonalityFingerprint` | Spectral graph theory |
+| `modules` | `VoiceModule` | Module-theoretic voice leading |
+
+## How It Fits
+
+The **algebraic foundation** of the FLUX music ecosystem:
+
+- [flux-algebra-rs](https://github.com/SuperInstance/flux-algebra-rs) — Rust port
+- [flux-algebra-c](https://github.com/SuperInstance/flux-algebra-c) — C port
+- [flux-tensor-midi](https://github.com/SuperInstance/flux-tensor-midi) — uses algebra for composition
+- [constraint-toolkit](https://github.com/SuperInstance/constraint-toolkit) — dial analysis using algebra
+- [conservation-spectral-python](https://github.com/SuperInstance/conservation-spectral-python) — spectral Laplacian analysis
+
+## Testing
+
+```bash
+pip install -e ".[dev]"
+pytest -v  # 10 test files
+```
+
+## Installation
 
 ```bash
 pip install flux-algebra
 ```
 
-## Quick Examples
-
-### Harmonic Ring Operations
-
-```python
-from flux_algebra import HarmonicRing
-
-hr = HarmonicRing(modulus=12)
-
-# Pitch-class arithmetic
-print(hr.add(7, 5))   # 0  (G + E = C)
-print(hr.multiply(3, 4))  # 0  (M3 × M3 = tritone wraps to unison in Z/12)
-
-# Ideals of Z/12Z correspond to musical structures
-for ideal in hr.all_ideals():
-    print(ideal)
-# {0}           — unison
-# {0, 6}        — tritone
-# {0, 4, 8}     — augmented triad
-# {0, 3, 6, 9}  — diminished 7th
-# {0, 2, 4, 6, 8, 10} — whole-tone scale
-# Z/12Z         — chromatic
-
-# Chord ideals
-cmaj = hr.chord_ideal([0, 4, 7])
-print(cmaj)         # Ideal([0, 4, 7])
-print(cmaj.cosets())  # quotient ring representatives
-```
-
-### Neo-Riemannian PLR Group Walks
-
-```python
-from flux_algebra import PLRGroup, Triad
-
-plr = PLRGroup()
-
-# Start from C major
-c_major = Triad(root=0, quality="major")  # {0, 4, 7}
-
-# Parallel: C major → C minor
-c_minor = plr.P(c_major)
-print(c_minor)  # Triad(0, minor) = {0, 3, 7}
-
-# Leading-tone: C minor → E♭ major
-eb_major = plr.L(c_minor)
-print(eb_major)  # Triad(3, major) = {3, 7, 10}
-
-# Relative: E♭ major → C minor (back)
-back = plr.R(eb_major)
-print(back)  # Triad(0, minor) ✓
-
-# PLR walk: explore all 24 major/minor triads
-walk = plr.walk("PLR", steps=3, start=c_major)
-print([str(t) for t in walk])
-```
-
-### Minimal Voice Leading
-
-```python
-from flux_algebra.combinatorics import minimal_voice_leading, smoothness
-
-source = [0, 4, 7]    # C major
-target = [5, 9, 0]    # F major
-
-vl = minimal_voice_leading(source, target)
-print(vl)        # [(0, 0), (4, 5), (7, 9)]
-print(smoothness(vl))  # 7 semitones total movement
-```
-
-### Dial Geometry
-
-```python
-from flux_algebra.geometry import DialPolytope, TraditionRegion
-
-# Define tradition centers in [0,5]^3 dial space
-jazz = TraditionRegion("jazz", center=(3.5, 2.0, 4.0), radius=0.8)
-blues = TraditionRegion("blues", center=(4.0, 1.5, 3.0), radius=0.7)
-classical = TraditionRegion("classical", center=(1.0, 4.5, 2.0), radius=1.0)
-
-hull = DialPolytope(traditions=[jazz, blues, classical])
-print(hull.volume())         # Volume of convex hull
-print(hull.contains((2.5, 3.0, 3.0)))  # Is this point explored?
-```
-
-### Tropical Harmony
-
-```python
-from flux_algebra.tropical import TropicalHarmony
-
-th = TropicalHarmony()
-
-# Tropical polynomial: min(x, x+4, x+7) models C major as a cost landscape
-cost = th.chord_cost([0, 4, 7])
-print(cost(0))   # 0  — C is a root, minimal cost
-print(cost(3))   # 3  — E♭ is 3 semitones from nearest chord tone
-
-# Tropical voice leading minimizes sum of movements
-vl = th.tropical_voice_leading([0, 4, 7], [5, 9, 0])
-print(vl)
-```
-
-## Architecture
-
-Every module mirrors a component of Oscar.jl, adapted for music-theoretic objects:
-
-- **`rings.py`** — `HarmonicRing` (ℤ/nℤ for pitch classes), `IntervalRing` (just intonation ratios), `ChordIdeal` (ideals generated by chord tones)
-- **`fields.py`** — `TuningField` (field extensions for ET, meantone, just, Pythagorean), `AlgebraicTone` (tones as algebraic numbers)
-- **`groups.py`** — `TranspositionInversionGroup` (T/I group ≅ D₂₄), `PLRGroup` (neo-Riemannian P/L/R), `PermutationVoiceLeading`
-- **`geometry.py`** — `DialPolytope` (convex hull of tradition regions), `VoiceLeadingGeodesic`, `TraditionRegion`
-- **`combinatorics.py`** — Voice leading via Hungarian algorithm, smoothness/efficiency metrics
-- **`tropical.py`** — Min-plus semiring applied to harmony and voice leading
-- **`modules.py`** — Free modules of voices over harmonic rings
-- **`serialization.py`** — JSON save/load for all algebraic structures
-- **`spectral.py`** — Tension-Graph Laplacian, eigenbasis decomposition, conservation analysis, tonality fingerprinting
-- **`oscar_compat.py`** — Oscar.jl-style API surface for Julia interop
-
-## Spectral Analysis (`spectral.py`)
-
-This module implements the **Eigenbasis Hypothesis**: musical structures
-are most naturally expressed in the eigenbasis of the Tension-Graph
-Laplacian of the PLR group.
-
-### HarmonicLaplacian
-
-Builds the Tension-Graph Laplacian from PLR group operations:
-
-```python
-from flux_algebra.spectral import HarmonicLaplacian
-
-hl = HarmonicLaplacian(sigma=1.0)
-L = hl.laplacian()                           # 24×24 Laplacian
-print(hl.eigenvalues)                        # sorted ascending
-print(hl.spectral_gap())                    # λ₁ - λ₀
-print(hl.algebraic_connectivity())           # λ₁ (Fiedler value)
-```
-
-### EigenbasisHarmonicRing
-
-Projects chord progressions onto the eigenbasis and measures
-conservation:
-
-```python
-from flux_algebra.spectral import (
-    EigenbasisHarmonicRing,
-    build_common_practice_walk,
-    build_chromatic_walk,
-)
-
-ehr = EigenbasisHarmonicRing()
-
-# Conservation score (lower = more conserved)
-cp = build_common_practice_walk()
-chrom = build_chromatic_walk()
-print(ehr.conservation_score(cp))     # eigenvalue-weighted
-print(ehr.conservation_score(cp, k=5))  # low-freq only
-
-# Optimal voice leading with eigenbasis cost
-perm, cost = ehr.optimal_voice_leading(
-    Triad(0, "major"), Triad(7, "major")
-)
-
-# Modulation detection
-results = ehr.detect_modulation(chord_sequence, window=8)
-```
-
-### TonalityFingerprint
-
-Corpus classification via eigenvalue signatures:
-
-```python
-from flux_algebra.spectral import TonalityFingerprint
-
-sig = TonalityFingerprint().fingerprint(corpus)
-sim = TonalityFingerprint.compare_corpora(corpus_a, corpus_b)
-
-references = {"baroque": cp, "romantic": chrom}
-period, confidence = TonalityFingerprint.identify_period(
-    target, references
-)
-```
-
-### Theory
-
-The Tension-Graph Laplacian is:
-
-```
-W[i, j] = P(i→j) · exp(-tension(i,j) / σ)
-L = D - W
-```
-
-Common-practice progressions have low conservation scores because
-they align with the low-frequency eigenmodes of this graph.
+Requires Python ≥ 3.10.
 
 ## License
 
 MIT
-
-Part of the [SuperInstance OpenConstruct](https://github.com/SuperInstance/OpenConstruct) ecosystem.
